@@ -1,1 +1,1 @@
-# Get-ImageFromHtmlBody
+# ManagedDeviceWallpaperGenerator
