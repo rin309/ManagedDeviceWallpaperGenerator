@@ -1,0 +1,84 @@
+{
+    "Colors":[
+        {
+            "Name": "2012",
+            "background-color": "#2E2E2E",
+            "color": "white"
+        },
+        {
+            "Name": "Blue",
+            "background-color": "#0063B1",
+            "color": "#B5DEFF"
+        },
+        {
+            "Name": "Black",
+            "background-color": "black",
+            "color": "gray"
+        },
+        {
+            "Name": "Gray",
+            "background-color": "#4A5459",
+            "color": "#1D2123"
+        },
+        {
+            "Name": "Green",
+            "background-color": "#10893E",
+            "color": "#B9F7D0"
+        },
+        {
+            "Name": "Dark gold",
+            "background-color": "#7E735F",
+            "color": "#4C4A48"
+        }
+    ],
+    "Styles": [
+        {
+            "Name": "Large (Consolas, Yu Gothic UI)",
+            "font-family": "Consolas, 'Yu Gothic UI', sans-serif",
+            "padding": "200px",
+            "line1.font-size": "50pt",
+            "line2.font-size": "26pt"
+        },
+        {
+            "Name": "Large (Yu Gothic)",
+            "font-family": "'Yu Gothic', sans-serif",
+            "padding": "200px",
+            "line1.font-size": "26pt",
+            "line2.font-family": "'Segoe UI Variable Display Light', 'Yu Gothic UI Light', sans-serif",
+            "line2.font-size": "50pt"
+        },
+        {
+            "Name": "Small (Consolas, Yu Gothic UI)",
+            "font-family": "Consolas, 'Yu Gothic UI', sans-serif",
+            "padding": "70px",
+            "line1.font-size": "28pt",
+            "line2.font-size": "18pt"
+        },
+        {
+            "Name": "Small (Yu Gothic)",
+            "font-family": "'Yu Gothic', sans-serif",
+            "padding": "70px",
+            "line1.font-size": "18pt",
+            "line2.font-family": "'Segoe UI Variable Display Light', 'Yu Gothic UI Light', sans-serif",
+            "line2.font-size": "28pt"
+        }
+    ],
+    "FontFamily": [
+        "'Segoe UI Variable Display', 'Yu Gothic UI', sans-serif",
+        "'Segoe UI Variable Display Light', 'Yu Gothic UI Light', sans-serif",
+        "'Segoe UI Variable Display Semil', 'Segoe UI Semilight', 'Yu Gothic', sans-serif",
+        "Consolas, 'Yu Gothic UI', sans-serif",
+        "'Yu Gothic', sans-serif",
+        "'Yu Mincho', serif",
+        "'Segoe UI Variable Display', 'Segoe UI', 'Meiryo UI', sans-serif",
+        "'Segoe UI Variable Display', 'Segoe UI', Meiryo, sans-serif",
+        "'BIZ UDPGothic', sans-serif",
+        "'BIZ UDPMincho', serif",
+        "'IPA Gothic', sans-serif",
+        "'IPA Mincho', serif",
+        "'IPAmj Mincho', serif"
+    ],
+    "FontSize": [
+        8,9,10,10.5,11,12,14,16,18,20,22,24,26,28,36,48,72
+    ]
+}
