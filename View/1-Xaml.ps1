@@ -3,8 +3,13 @@
 #
 
 Function Global:Get-ViewClass{
-    $SetDllDirectory = Add-Type -PassThru -Name "WindowsNtBaseApiClientDll" -MemberDefinition "[DllImport(""kernel32.dll"", SetLastError = true)]
-        public static extern bool SetDllDirectory(string lpPathName);"
+    $Global:Win32Functions = Add-Type -PassThru -Name "Win32Functions" -MemberDefinition "[DllImport(""kernel32.dll"", SetLastError = true)]
+        public static extern bool SetDllDirectory(string lpPathName);
+        [DllImport(""user32.dll"", SetLastError = true)]
+        public static extern bool SetSysColors(int cElements, int [] lpaElements, int [] lpaRgbValues);
+        [DllImport(""user32.dll"", SetLastError = true)]
+        public static extern int SystemParametersInfo(int uiAction, int uiParam, string pvParam, int fWinIni);"
+
 
     $WebView2RuntimesPath = "$env:ProgramFiles\PackageManagement\NuGet\Packages\Microsoft.Web.WebView*\runtimes"
     If (Test-Path $WebView2RuntimesPath -PathType Container){
@@ -22,11 +27,11 @@ Function Global:Get-ViewClass{
         $MicrosoftWebWebView2WpfForDotnet45Path = (Get-Item "$env:ProgramFiles\PackageManagement\NuGet\Packages\Microsoft.Web.WebView*\lib\net45\Microsoft.Web.WebView2.Wpf.dll")[0]
         $MicrosoftWebWebView2CoreForDotnet45Path = (Get-Item "$env:ProgramFiles\PackageManagement\NuGet\Packages\Microsoft.Web.WebView*\lib\net45\Microsoft.Web.WebView2.Core.dll")[0]
         $Path = (Split-Path $WebView2LoaderPath -Parent)
-        $SetDllDirectory::SetDllDirectory($Path) | Out-Null
+        $Win32Functions::SetDllDirectory($Path) | Out-Null
     }
     Else{
-        $MicrosoftWebWebView2WpfForDotnet45Path = "Microsoft.Web.WebView2.Wpf.dll"
-        $MicrosoftWebWebView2CoreForDotnet45Path = "Microsoft.Web.WebView2.Core.dll"
+        $MicrosoftWebWebView2WpfForDotnet45Path = (Get-Item "Microsoft.Web.WebView2.Wpf.dll")[0]
+        $MicrosoftWebWebView2CoreForDotnet45Path = (Get-Item "Microsoft.Web.WebView2.Core.dll")[0]
     }
     [Reflection.Assembly]::LoadFile($MicrosoftWebWebView2WpfForDotnet45Path) | Out-Null
     [Reflection.Assembly]::LoadFile($MicrosoftWebWebView2CoreForDotnet45Path) | Out-Null
@@ -57,7 +62,7 @@ Public Class WebView2ExtendFunctions
 End Class
     '
 
-    # $SetDllDirectory::SetDllDirectory("") | Out-Null
+    # $Win32Functions::SetDllDirectory("") | Out-Null
     # write-host ([System.AppDomain]::CurrentDomain.GetAssemblies() | foreach {$_.Location})
 }
 
@@ -143,7 +148,6 @@ Function Global:Get-MainWindow(){
 
     [System.Windows.Forms.Integration.ElementHost]::EnableModelessKeyboardInterop($MainWindow)
     $MainWindow.FindName("WebView2").Add_Loaded({
-
         $MainWindow.FindName("WebView2").Add_NavigationCompleted({param($sender, $e)
             If ($FirstLoaded){
                 Return
@@ -176,6 +180,7 @@ Function Global:Get-MainWindow(){
         })
         $MainWindow.Add_KeyUp({param($sender, $e)
             If ($e.Key -eq [System.Windows.Input.Key]::F12){
+                #$MainWindow.FindName("WebView2").CoreWebView2.Navigate("edge://flags/#force-color-profile")
                 $MainWindow.FindName("WebView2").CoreWebView2.OpenDevToolsWindow()
             }
         })
@@ -285,6 +290,59 @@ GetCssValue('#Line2', 'font-size');
         }
     })
 
+    $MainWindow.FindName("ApplyDesktopButton").Add_Click({
+        $FileChooser = New-Object System.Windows.Forms.SaveFileDialog
+        $FileChooser.InitialDirectory = [Environment]::GetFolderPath("Desktop")
+        $FileChooser.RestoreDirectory = $True
+        $FileChooser.FileName = "Wallpaper.png"
+        $FileChooser.Filter = "*.png|*.png"
+
+        If ($FileChooser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK){
+            $FileName = $FileChooser.FileName
+            Remove-Item $FileName -ErrorAction Ignore
+            
+            [WebView2ExtendFunctions]::CapturePreview($MainWindow.FindName("WebView2"), $FileName, $Null)
+
+            [WebView2ExtendFunctions]::ExecuteScript($MainWindow.FindName("WebView2"), "window.getComputedStyle(document.body, null).getPropertyValue('background-color');", [Action[String]]{param ($Value)
+                #$BackgroundColor = [System.Drawing.ColorTranslator]::FromHtml($MainWindow.FindName("ColorsComboBox").SelectedItem."background-color")
+                #$BackgroundColor = [System.Drawing.ColorTranslator]::FromHtml(($Value | ConvertFrom-Json))
+                $Value = ($Value | ConvertFrom-Json).Replace("rgb(","").Replace(")","").Replace(",",".")
+                $Value = [Version]$Value
+                $BackgroundColor = [System.Drawing.ColorTranslator]::ToHtml([System.Drawing.Color]::FromArgb($Value.Major, $Value.Minor, $Value.Build))
+                $COLOR_DESKTOP = 1
+                [int[]]$Elements = @($COLOR_DESKTOP)
+                [int[]]$Colors = @([System.Drawing.ColorTranslator]::ToWin32($BackgroundColor))
+                $Win32Functions::SetSysColors($Elements.Length, $Elements, $Colors) | Out-Null
+
+            })
+            
+            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WallpaperStyle" -Value 0
+            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "TileWallpaper" -Value 0
+
+            Start-Job -ArgumentList $FileName -ScriptBlock {param($FileName)
+                $Global:Win32Functions = Add-Type -PassThru -Name "Win32Functions" -MemberDefinition "[DllImport(""user32.dll"", SetLastError = true)]
+                    public static extern int SystemParametersInfo(int uiAction, int uiParam, string pvParam, int fWinIni);"
+
+                $SPI_SETDESKWALLPAPER = 0x0014
+                [Flags()] enum fWinIni{
+                    SPIF_UPDATEINIFILE
+                    SPIF_SENDCHANGE
+                    SPIF_SENDWININICHANGE
+                }
+                $Limit = (Get-Date).AddSeconds(10)
+                While ((Get-Date) -lt $Limit){
+                    #Start-Sleep -Milliseconds 100
+                    If (Test-Path $FileName){
+                        $Win32Functions::SystemParametersInfo($SPI_SETDESKWALLPAPER, 0, $FileName, [Int]([fWinIni]::SPIF_SENDCHANGE + [fWinIni]::SPIF_SENDWININICHANGE)) | Out-Null
+                        Return
+                    }
+                }
+            }
+
+        }
+
+    })
+
     # Layout tab
     $MainWindow.FindName("TopLeftAlignmentRadioButton").Add_Checked({param($sender, $e) Update-WebView2Variable -sender $sender -e $e})
     $MainWindow.FindName("TopCenterAlignmentRadioButton").Add_Checked({param($sender, $e) Update-WebView2Variable -sender $sender -e $e})
@@ -382,7 +440,7 @@ GetCssValue('#Line2', 'font-size');
         $MainWindow.FindName("WebView2").Height = [Int]($MainWindow.FindName("HeightTextBox").Text) * $MainWindow.FindName("WebView2").ZoomFactor
         $Global:FiledUpdateing = $False
     })
-    $MainWindow.FindName("IgnoreDpiSettingsCheckBox").Add_UnChecked({param($sender, $e) 
+    $MainWindow.FindName("IgnoreDpiSettingsCheckBox").Add_UnChecked({param($sender, $e)
         $MainWindow.FindName("WebView2").ZoomFactor = 1
         $Global:FiledUpdateing = $True
         $MainWindow.FindName("WebView2").Width = [Int]($MainWindow.FindName("WidthTextBox").Text)
@@ -392,5 +450,27 @@ GetCssValue('#Line2', 'font-size');
     })
 
     # Template tab
-    #$MainWindow.FindName("ImportHtmlButton").Add_Click({})
+    $MainWindow.FindName("ImportHtmlButton").Add_Click({param($sender, $e)
+        $FileChooser = New-Object System.Windows.Forms.OpenFileDialog
+        $FileChooser.InitialDirectory = [Environment]::GetFolderPath("Desktop")
+        $FileChooser.RestoreDirectory = $True
+        $FileChooser.Filter = "*.htm;*.html|*.htm;*.html"
+
+        If ($FileChooser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK){
+            $Global:HtmlTemplate = Get-Content -Path $FileChooser.FileName -Encoding UTF8
+            Update-WebView2Variable -sender $sender -e $e
+        }
+    })
+    $MainWindow.FindName("ExportHtmlButton").Add_Click({param($sender, $e)
+        $FileChooser = New-Object System.Windows.Forms.SaveFileDialog
+        $FileChooser.InitialDirectory = [Environment]::GetFolderPath("Desktop")
+        $FileChooser.RestoreDirectory = $True
+        $FileChooser.Filter = "*.htm;*.html|*.htm;*.html"
+
+        If ($FileChooser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK){
+            $Global:HtmlFilePath = $FileChooser.FileName
+            [WebView2ExtendFunctions]::ExecuteScript($MainWindow.FindName("WebView2"), "document.documentElement.outerHTML;", [Action[String]]{param ($Value) $Value | ConvertFrom-Json | Out-File $HtmlFilePath -Encoding UTF8; $Global:HtmlFilePath = $Null})
+        }
+       
+    })
 }

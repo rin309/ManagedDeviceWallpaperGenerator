@@ -59,9 +59,9 @@
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="&#xE8D2;" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,5,0" />
+                                <TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,5,0" />
                                 <ComboBox x:Name="FontFamilyComboBox" IsEditable="True" ItemsSource="{Binding FontFamily}" Grid.Column="1" VerticalAlignment="Center" IsTextSearchEnabled="False" IsEnabled="False" d:IsEnabled="True" />
-                                <TextBlock Text="&#xE8E9;" FontFamily="Segoe Fluent Icons" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,5,0" Grid.Row="1" />
+                                <TextBlock Text="&#xE8E9;" FontFamily="Segoe MDL2 Assets" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,5,0" Grid.Row="1" />
                                 <ComboBox x:Name="FontSizeComboBox" IsEditable="True" ItemsSource="{Binding FontSize}" Grid.Column="1" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Left" MinWidth="50" IsTextSearchEnabled="False" IsEnabled="False" d:IsEnabled="True" />
                             </Grid>
                         </StackPanel>
@@ -108,16 +108,26 @@
                                 </Grid>
                                 <Button x:Name="SetPrimaryScreenSizeButton" Content="Set primary screen size" Margin="0" />
                             </StackPanel>
-                            <TextBlock Text="Settings" Margin="{DynamicResource ContentMargin}" />
+                            <TextBlock Text="Settings" Margin="{DynamicResource ContentMargin }" />
                             <CheckBox x:Name="AutoOverFlowCheckBox" Margin="{DynamicResource ContentMargin}" Content="Auto over flow"/>
                             <CheckBox x:Name="IgnoreDpiSettingsCheckBox" Margin="{DynamicResource ContentMargin}" Content="Ignore DPI settings"/>
 
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
+                <TabItem Header="Template">
+                    <ScrollViewer>
+                        <StackPanel Margin="10">
+                            <Button x:Name="ImportHtmlButton" Content="Import" />
+                            <Button x:Name="ExportHtmlButton" Content="Export" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
             </TabControl>
-
-            <Button x:Name="SaveImageButton" Grid.Row="1" Content="Save Image" VerticalAlignment="Center" Style="{DynamicResource ActiveButtonStyle}" />
+            <StackPanel Grid.Row="1">
+                <Button x:Name="ApplyDesktopButton" Content="Apply desktop wallpaper" VerticalAlignment="Center" />
+                <Button x:Name="SaveImageButton" Content="Save Image only" VerticalAlignment="Center" Style="{DynamicResource ActiveButtonStyle}" />
+            </StackPanel>
         </Grid>
         <GridSplitter Height="100" Width="5"/>
         <Grid Grid.Column="1">
