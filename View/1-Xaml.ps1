@@ -130,6 +130,20 @@ Function Global:Get-Xaml($Path){
     Return [Windows.Markup.XamlReader]::Load($XamlDocument.CreateReader())
 }
 
+Function Script:Set-FontFamilyComboBoxFontSizeComboBoxValue(){
+    $FontFamily = $MainWindow.FindName("StylesComboBox").SelectedItem."$(($EditingTextControlName).ToLower()).font-family"
+    $FontSize = $MainWindow.FindName("StylesComboBox").SelectedItem."$(($EditingTextControlName).ToLower()).font-size".Replace("pt","")
+    If ([String]::IsNullOrWhiteSpace($FontFamily)){
+        write-host $MainWindow.FindName("StylesComboBox").SelectedItem
+        $FontFamily = $MainWindow.FindName("StylesComboBox").SelectedItem."font-family"
+    }
+    If ([String]::IsNullOrWhiteSpace($FontSize)){
+        $FontSize = $MainWindow.FindName("StylesComboBox").SelectedItem."font-size".Replace("pt","")
+    }
+    $MainWindow.FindName("FontFamilyComboBox").Text = $FontFamily
+    $MainWindow.FindName("FontSizeComboBox").Text = $FontSize
+}
+
 Function Global:Get-MainWindow(){
     $Global:HtmlTemplate = Get-Content -Path (Join-Path $PsScriptRoot "..\Assets\Template.htm") -Encoding UTF8
     $Global:FiledUpdateing = $True
@@ -148,6 +162,7 @@ Function Global:Get-MainWindow(){
 
     [System.Windows.Forms.Integration.ElementHost]::EnableModelessKeyboardInterop($MainWindow)
     $MainWindow.FindName("WebView2").Add_Loaded({
+
         $MainWindow.FindName("WebView2").Add_NavigationCompleted({param($sender, $e)
             If ($FirstLoaded){
                 Return
@@ -196,43 +211,13 @@ Function Global:Get-MainWindow(){
         $Global:EditingTextControlName = "Line1"
         $MainWindow.FindName("FontFamilyComboBox").IsEnabled = $True
         $MainWindow.FindName("FontSizeComboBox").IsEnabled = $True
-        [WebView2ExtendFunctions]::ExecuteScript($MainWindow.FindName("WebView2"), "window.getComputedStyle(document.getElementById('Line1')).getPropertyValue('font-family');", [Action[String]]{param ($Value) $MainWindow.FindName("FontFamilyComboBox").Text = ($Value | ConvertFrom-Json)})
-        [WebView2ExtendFunctions]::ExecuteScript($MainWindow.FindName("WebView2"), "
-function GetCssValue(cssTag, propertyName){
-    var value;
-    Object.values(document.styleSheets[0].cssRules).forEach((block) => {
-        if (block.selectorText == cssTag) {
-            const candidate = block.styleMap.get(propertyName);
-            if (candidate != null) {
-                value = candidate.value;
-            }
-        }
-    })
-    return value;
-}
-GetCssValue('#Line1', 'font-size');
-        ", [Action[String]]{param ($Value) $MainWindow.FindName("FontSizeComboBox").Text = $Value})
+        Set-FontFamilyComboBoxFontSizeComboBoxValue
     })
     $MainWindow.FindName("Line2TextBox").Add_GotFocus({
         $Global:EditingTextControlName = "Line2"
         $MainWindow.FindName("FontFamilyComboBox").IsEnabled = $True
         $MainWindow.FindName("FontSizeComboBox").IsEnabled = $True
-        [WebView2ExtendFunctions]::ExecuteScript($MainWindow.FindName("WebView2"), "window.getComputedStyle(document.getElementById('Line2')).getPropertyValue('font-family');", [Action[String]]{param ($Value) $MainWindow.FindName("FontFamilyComboBox").Text = ($Value | ConvertFrom-Json)})
-        [WebView2ExtendFunctions]::ExecuteScript($MainWindow.FindName("WebView2"), "
-function GetCssValue(cssTag, propertyName){
-    var value;
-    Object.values(document.styleSheets[0].cssRules).forEach((block) => {
-        if (block.selectorText == cssTag) {
-            const candidate = block.styleMap.get(propertyName);
-            if (candidate != null) {
-                value = candidate.value;
-            }
-        }
-    })
-    return value;
-}
-GetCssValue('#Line2', 'font-size');
-        ", [Action[String]]{param ($Value) $MainWindow.FindName("FontSizeComboBox").Text = $Value})
+        Set-FontFamilyComboBoxFontSizeComboBoxValue
     })
 
 
@@ -241,17 +226,17 @@ GetCssValue('#Line2', 'font-size');
             If ($sender -ne $Null){
                 $sender.Template.FindName("PART_EditableTextBox", $sender).SelectAll()
             }
-            ($MainWindow.FindName("StylesComboBox").SelectedItem)."$(($EditingTextControlName).ToLower()).font-family" = $MainWindow.FindName("FontFamilyComboBox").Text
+            $MainWindow.FindName("StylesComboBox").SelectedItem."$(($EditingTextControlName).ToLower()).font-family" = $MainWindow.FindName("FontFamilyComboBox").Text
             Update-WebView2Variable -sender $sender -e $e
         }
     })
     $MainWindow.FindName("FontFamilyComboBox").AddHandler([System.Windows.Controls.Primitives.TextBoxBase]::TextChangedEvent, [System.Windows.RoutedEventHandler]{param($sender, $e)
         If ($sender -ne $Null){
-            $sender.Template.FindName("PART_EditableTextBox", $sender).SelectAll()
+            #$sender.Template.FindName("PART_EditableTextBox", $sender).SelectAll()
         }
         If ($EditingTextControlName -ne $Null){
             If (($MainWindow.FindName("StylesComboBox").SelectedItem)."$(($EditingTextControlName).ToLower()).font-family" -ne $MainWindow.FindName("FontFamilyComboBox").Text){
-                ($MainWindow.FindName("StylesComboBox").SelectedItem)."$(($EditingTextControlName).ToLower()).font-family" = $MainWindow.FindName("FontFamilyComboBox").Text
+                $MainWindow.FindName("StylesComboBox").SelectedItem."$(($EditingTextControlName).ToLower()).font-family" = $MainWindow.FindName("FontFamilyComboBox").Text
                 Update-WebView2Variable -sender $sender -e $e
             }
         }
@@ -261,17 +246,17 @@ GetCssValue('#Line2', 'font-size');
             If ($sender -ne $Null){
                 $sender.Template.FindName("PART_EditableTextBox", $sender).SelectAll()
             }
-            ($MainWindow.FindName("StylesComboBox").SelectedItem)."$(($EditingTextControlName).ToLower()).font-size" = "$($MainWindow.FindName("FontSizeComboBox").Text)pt"
+            $MainWindow.FindName("StylesComboBox").SelectedItem."$(($EditingTextControlName).ToLower()).font-size" = "$($MainWindow.FindName("FontSizeComboBox").Text)pt"
             Update-WebView2Variable -sender $sender -e $e
         }
     })
     $MainWindow.FindName("FontSizeComboBox").AddHandler([System.Windows.Controls.Primitives.TextBoxBase]::TextChangedEvent, [System.Windows.RoutedEventHandler]{param($sender, $e)
         If ($sender -ne $Null){
-            $sender.Template.FindName("PART_EditableTextBox", $sender).SelectAll()
+            #$sender.Template.FindName("PART_EditableTextBox", $sender).SelectAll()
         }
         If ($EditingTextControlName -ne $Null){
             If (($MainWindow.FindName("StylesComboBox").SelectedItem)."$(($EditingTextControlName).ToLower()).font-size" -ne "$($MainWindow.FindName("FontSizeComboBox").Text)pt"){
-                ($MainWindow.FindName("StylesComboBox").SelectedItem)."$(($EditingTextControlName).ToLower()).font-size" = "$($MainWindow.FindName("FontSizeComboBox").Text)pt"
+                $MainWindow.FindName("StylesComboBox").SelectedItem."$(($EditingTextControlName).ToLower()).font-size" = "$($MainWindow.FindName("FontSizeComboBox").Text)pt"
                 Update-WebView2Variable -sender $sender -e $e
             }
         }
@@ -304,8 +289,6 @@ GetCssValue('#Line2', 'font-size');
             [WebView2ExtendFunctions]::CapturePreview($MainWindow.FindName("WebView2"), $FileName, $Null)
 
             [WebView2ExtendFunctions]::ExecuteScript($MainWindow.FindName("WebView2"), "window.getComputedStyle(document.body, null).getPropertyValue('background-color');", [Action[String]]{param ($Value)
-                #$BackgroundColor = [System.Drawing.ColorTranslator]::FromHtml($MainWindow.FindName("ColorsComboBox").SelectedItem."background-color")
-                #$BackgroundColor = [System.Drawing.ColorTranslator]::FromHtml(($Value | ConvertFrom-Json))
                 $Value = ($Value | ConvertFrom-Json).Replace("rgb(","").Replace(")","").Replace(",",".")
                 $Value = [Version]$Value
                 $BackgroundColor = [System.Drawing.ColorTranslator]::ToHtml([System.Drawing.Color]::FromArgb($Value.Major, $Value.Minor, $Value.Build))
@@ -331,7 +314,6 @@ GetCssValue('#Line2', 'font-size');
                 }
                 $Limit = (Get-Date).AddSeconds(10)
                 While ((Get-Date) -lt $Limit){
-                    #Start-Sleep -Milliseconds 100
                     If (Test-Path $FileName){
                         $Win32Functions::SystemParametersInfo($SPI_SETDESKWALLPAPER, 0, $FileName, [Int]([fWinIni]::SPIF_SENDCHANGE + [fWinIni]::SPIF_SENDWININICHANGE)) | Out-Null
                         Return

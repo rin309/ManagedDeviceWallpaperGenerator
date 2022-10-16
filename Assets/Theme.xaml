@@ -108,6 +108,7 @@
     <CornerRadius x:Key="CornerRadius">4,4,4,4</CornerRadius>
 
     <Thickness x:Key="TextBoxPadding">4,2,4,3</Thickness>
+    <Thickness x:Key="ComboBoxPadding">12,5,10,3</Thickness>
     <Thickness x:Key="ButtonPadding">8,4,8,5</Thickness>
 
     <Thickness x:Key="NormalThickness">20,5</Thickness>
