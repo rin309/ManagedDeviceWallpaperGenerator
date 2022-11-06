@@ -61,9 +61,6 @@ Public Class WebView2ExtendFunctions
 
 End Class
     '
-
-    # $Win32Functions::SetDllDirectory("") | Out-Null
-    # write-host ([System.AppDomain]::CurrentDomain.GetAssemblies() | foreach {$_.Location})
 }
 
 Function Global:Request-Job($Script, $DependentPs1File, $Arguments) {
@@ -134,7 +131,6 @@ Function Script:Set-FontFamilyComboBoxFontSizeComboBoxValue(){
     $FontFamily = $MainWindow.FindName("StylesComboBox").SelectedItem."$(($EditingTextControlName).ToLower()).font-family"
     $FontSize = $MainWindow.FindName("StylesComboBox").SelectedItem."$(($EditingTextControlName).ToLower()).font-size".Replace("pt","")
     If ([String]::IsNullOrWhiteSpace($FontFamily)){
-        write-host $MainWindow.FindName("StylesComboBox").SelectedItem
         $FontFamily = $MainWindow.FindName("StylesComboBox").SelectedItem."font-family"
     }
     If ([String]::IsNullOrWhiteSpace($FontSize)){
@@ -162,7 +158,6 @@ Function Global:Get-MainWindow(){
 
     [System.Windows.Forms.Integration.ElementHost]::EnableModelessKeyboardInterop($MainWindow)
     $MainWindow.FindName("WebView2").Add_Loaded({
-
         $MainWindow.FindName("WebView2").Add_NavigationCompleted({param($sender, $e)
             If ($FirstLoaded){
                 Return
@@ -195,7 +190,6 @@ Function Global:Get-MainWindow(){
         })
         $MainWindow.Add_KeyUp({param($sender, $e)
             If ($e.Key -eq [System.Windows.Input.Key]::F12){
-                #$MainWindow.FindName("WebView2").CoreWebView2.Navigate("edge://flags/#force-color-profile")
                 $MainWindow.FindName("WebView2").CoreWebView2.OpenDevToolsWindow()
             }
         })
@@ -277,7 +271,12 @@ Function Global:Get-MainWindow(){
 
     $MainWindow.FindName("ApplyDesktopButton").Add_Click({
         $FileChooser = New-Object System.Windows.Forms.SaveFileDialog
-        $FileChooser.InitialDirectory = [Environment]::GetFolderPath("Desktop")
+        If ((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){
+            $FileChooser.InitialDirectory = (Join-Path $env:SystemRoot "Web\Wallpaper")
+        }
+        Else{
+            $FileChooser.InitialDirectory = [Environment]::GetFolderPath("Desktop")
+        }
         $FileChooser.RestoreDirectory = $True
         $FileChooser.FileName = "Wallpaper.png"
         $FileChooser.Filter = "*.png|*.png"
@@ -301,6 +300,7 @@ Function Global:Get-MainWindow(){
             
             Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WallpaperStyle" -Value 0
             Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "TileWallpaper" -Value 0
+            Set-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "Background" -Value ([String]::Format("{0} {1} {2}", $Value.Major, $Value.Minor, $Value.Build))
 
             Start-Job -ArgumentList $FileName -ScriptBlock {param($FileName)
                 $Global:Win32Functions = Add-Type -PassThru -Name "Win32Functions" -MemberDefinition "[DllImport(""user32.dll"", SetLastError = true)]
