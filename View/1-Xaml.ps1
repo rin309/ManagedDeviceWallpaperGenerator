@@ -296,11 +296,11 @@ Function Global:Get-MainWindow(){
                 [int[]]$Colors = @([System.Drawing.ColorTranslator]::ToWin32($BackgroundColor))
                 $Win32Functions::SetSysColors($Elements.Length, $Elements, $Colors) | Out-Null
 
+                Set-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "Background" -Value ([String]::Format("{0} {1} {2}", $Value.Major, $Value.Minor, $Value.Build))
             })
             
             Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WallpaperStyle" -Value 0
             Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "TileWallpaper" -Value 0
-            Set-ItemProperty -Path "HKCU:\Control Panel\Colors" -Name "Background" -Value ([String]::Format("{0} {1} {2}", $Value.Major, $Value.Minor, $Value.Build))
 
             Start-Job -ArgumentList $FileName -ScriptBlock {param($FileName)
                 $Global:Win32Functions = Add-Type -PassThru -Name "Win32Functions" -MemberDefinition "[DllImport(""user32.dll"", SetLastError = true)]
